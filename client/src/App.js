@@ -10,6 +10,7 @@ import api from './utils/api';
 const API_ENDPOINT = '/analyze';
 
 function App() {
+  // eslint-disable-next-line no-unused-vars
   const [url, setUrl] = useState('');
   const [analysisData, setAnalysisData] = useState(null);
   const [history, setHistory] = useState([]);

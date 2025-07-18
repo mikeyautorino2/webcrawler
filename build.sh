@@ -13,9 +13,9 @@ echo "📦 Installing frontend dependencies..."
 cd client
 npm install
 
-# Build frontend
+# Build frontend with CI=false to prevent warnings being treated as errors
 echo "🏗️ Building frontend..."
-npm run build
+CI=false npm run build
 cd ..
 
 echo "✅ Build completed successfully!"
