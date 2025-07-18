@@ -1,5 +1,7 @@
 # Link Analyzer & Web Crawler
 
+NOTE: unfortunately not ready yet for deployment, still have some bugs to see through, got lazy and sleepy on flight
+
 A modern web application that analyzes websites by extracting metadata, counting links and images, and providing valuable insights about web pages.
 
 ## 🚀 Features
@@ -141,53 +143,6 @@ link-analyzer/
 - Batch URL processing
 - SEO recommendations based on analysis
 - Advanced crawling options
-
-## 🚀 Deploying to Vercel
-
-### Setup Steps
-
-1. **Fork or clone this repository** to your GitHub account
-
-2. **Connect your GitHub repository to Vercel**
-   - Go to [Vercel](https://vercel.com) and sign in
-   - Click "New Project" and import your GitHub repository
-   - Select the repository and configure as follows
-
-3. **Configure your project in Vercel**
-   - Framework Preset: `Other`
-   - Build Command: `npm run build`
-   - Output Directory: Leave default
-   - Install Command: `npm install`
-
-4. **Set environment variables**
-   - `NODE_ENV`: `production`
-   - `DATABASE_URL`: Your production PostgreSQL connection string
-   - `ALLOWED_ORIGINS`: Your Vercel app URL (e.g., `https://your-app-name.vercel.app`)
-
-5. **Deploy!**
-   - Click "Deploy" and wait for the build to complete
-
-### Troubleshooting Vercel Deployment
-
-If you encounter a 404 "deployment not found" error:
-
-1. **Check your routing configuration**
-   - Verify your `vercel.json` file is correctly configured
-   - Make sure API routes are properly set up
-
-2. **Database connection issues**
-   - Confirm your `DATABASE_URL` environment variable is set correctly
-   - Ensure your database provider allows connections from Vercel
-   - Check SSL settings for your database connection
-
-3. **Build failures**
-   - Check build logs in the Vercel dashboard for errors
-   - Make sure all dependencies are correctly listed
-   - Verify build scripts are properly configured
-
-4. **API routes not working**
-   - Check that frontend API calls use the correct URLs
-   - Verify CORS settings in your Express app
 
 ## 📄 License
 
