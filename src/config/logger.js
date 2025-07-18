@@ -25,7 +25,6 @@ const logger = winston.createLogger({
   ]
 });
 
-// Create the log directory if it doesn't exist
 const fs = require('fs');
 const path = require('path');
 const logDir = 'logs';
