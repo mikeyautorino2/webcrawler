@@ -9,6 +9,8 @@
     "client": "cd client && npm start",
     "install-client": "cd client && npm install",
     "build-client": "cd client && npm run build",
+    "build": "./build.sh",
+    "vercel-build": "./build.sh",
     "dev-full": "concurrently \"npm run dev\" \"npm run client\"",
     "test": "jest --detectOpenHandles"
   },

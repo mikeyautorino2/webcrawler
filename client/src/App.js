@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import './App.css';
 import UrlForm from './components/UrlForm';
 import AnalysisResults from './components/AnalysisResults';
 import HistoryList from './components/HistoryList';
 import Header from './components/Header';
 import LoadingSpinner from './components/LoadingSpinner';
+import api from './utils/api';
 
-const API_URL = 'http://localhost:5000/api/analyze';
+const API_ENDPOINT = '/analyze';
 
 function App() {
   const [url, setUrl] = useState('');
@@ -23,7 +23,7 @@ function App() {
   const fetchHistory = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(API_URL);
+      const response = await api.get(API_ENDPOINT);
       setHistory(response.data);
       setLoading(false);
     } catch (err) {
@@ -38,7 +38,7 @@ function App() {
       setError('');
       setUrl(submittedUrl);
       
-      const response = await axios.post(API_URL, { url: submittedUrl });
+      const response = await api.post(API_ENDPOINT, { url: submittedUrl });
       setAnalysisData(response.data);
       
       // Refresh history after new analysis
@@ -54,7 +54,7 @@ function App() {
   const handleViewAnalysis = async (id) => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_URL}/${id}`);
+      const response = await api.get(`${API_ENDPOINT}/${id}`);
       setAnalysisData(response.data);
       setUrl(response.data.url);
       setLoading(false);
@@ -68,7 +68,7 @@ function App() {
   const handleReanalyze = async (id) => {
     try {
       setLoading(true);
-      const response = await axios.post(`${API_URL}/${id}/reanalyze`);
+      const response = await api.post(`${API_ENDPOINT}/${id}/reanalyze`);
       setAnalysisData(response.data);
       fetchHistory();
       setLoading(false);

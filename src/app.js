@@ -16,12 +16,9 @@ const app = express();
 
 // Set up request logging
 if (process.env.NODE_ENV === 'production') {
-  // Log to file in production
-  const accessLogStream = fs.createWriteStream(
-    path.join(__dirname, '../logs/access.log'), 
-    { flags: 'a' }
-  );
-  app.use(morgan('combined', { stream: accessLogStream }));
+  // In production, log to console with combined format
+  // This works with Vercel's serverless environment
+  app.use(morgan('combined'));
 } else {
   // Log to console in development
   app.use(morgan('dev'));
@@ -66,6 +63,23 @@ app.use((req, res) => {
     message: `The requested resource at ${req.path} was not found`
   });
 });
+
+// Serve static files from the React app in production
+if (process.env.NODE_ENV === 'production') {
+  const clientBuildPath = path.join(__dirname, '..', 'client', 'build');
+  
+  // Serve static files
+  app.use(express.static(clientBuildPath));
+  
+  // Handle React routing, return all requests to React app
+  app.get('*', (req, res, next) => {
+    // Skip API routes
+    if (req.path.startsWith('/api/')) {
+      return next();
+    }
+    res.sendFile(path.join(clientBuildPath, 'index.html'));
+  });
+}
 
 // Global error handler
 app.use(errorHandler);
