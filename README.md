@@ -1,6 +1,6 @@
 # Link Analyzer & Web Crawler
 
-NOTE: unfortunately not ready yet for deployment, still have some bugs to see through, got lazy and sleepy on flight
+NOTE: Unfortunately still working on some final bugs. Feel free to fork the repo!
 
 A modern web application that analyzes websites by extracting metadata, counting links and images, and providing valuable insights about web pages.
 
