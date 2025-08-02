@@ -35,26 +35,47 @@ const AnalysisController = {
       
       res.status(201).json(savedAnalysis);
     } catch (error) {
-      logger.error('Error in analyzeUrl controller', { error: error.message });
+      logger.error('Error in analyzeUrl controller', { 
+        error: error.message,
+        url: req.body.url,
+        stack: error.stack 
+      });
       
       if (error.message === 'Invalid URL format') {
         return res.status(400).json({ error: 'Invalid URL format' });
       }
       
-      if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
-        return res.status(400).json({ error: 'Could not connect to the website' });
+      if (error.code === 'ECONNREFUSED') {
+        return res.status(400).json({ error: 'Could not connect to the website. Please check if the URL is accessible.' });
       }
       
+      if (error.code === 'ENOTFOUND') {
+        return res.status(400).json({ error: 'Website not found. Please check if the URL is correct.' });
+      }
+
+      if (error.code === 'ETIMEDOUT') {
+        return res.status(400).json({ error: 'Request timed out. The website took too long to respond.' });
+      }
+
       if (error.response) {
         const status = error.response.status;
-        if (status === 404) {
-          return res.status(400).json({ error: 'Page not found (404)' });
-        } else if (status >= 400) {
-          return res.status(400).json({ error: `Website returned error: ${status}` });
+        const errorMessage = error.response.data?.error || error.response.statusText;
+        
+        switch (status) {
+          case 403:
+            return res.status(400).json({ error: 'Access forbidden. The website blocked our request.' });
+          case 404:
+            return res.status(400).json({ error: 'Page not found (404). Please check if the URL is correct.' });
+          case 429:
+            return res.status(400).json({ error: 'Too many requests. Please try again later.' });
+          case 500:
+            return res.status(400).json({ error: 'Website server error. Please try again later.' });
+          default:
+            return res.status(400).json({ error: `Website error (${status}): ${errorMessage}` });
         }
       }
       
-      res.status(500).json({ error: 'Failed to analyze URL' });
+      res.status(500).json({ error: 'Failed to analyze URL. Please try again or contact support if the issue persists.' });
     }
   },
 

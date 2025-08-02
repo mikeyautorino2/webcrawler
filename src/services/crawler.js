@@ -20,10 +20,15 @@ class CrawlerService {
 
       const response = await axios.get(normalizedUrl, {
         headers: {
-          'User-Agent': 'LinkAnalyzer Bot/1.0 (https://linkanalyzer.example.com)',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5',
         },
-        timeout: 10000, // 10 second timeout
-        maxContentLength: 1024 * 1024 * 5, // 5MB max response size
+        timeout: 30000, // 30 second timeout
+        maxContentLength: 1024 * 1024 * 10, // 10MB max response size
+        validateStatus: function (status) {
+          return status >= 200 && status < 300; // Consider only 2xx status codes as success
+        },
       });
 
       const html = response.data;
@@ -33,6 +38,7 @@ class CrawlerService {
         url, 
         error: error.message,
         status: error.response?.status,
+        headers: error.response?.headers,
       });
       throw error;
     }
@@ -115,39 +121,33 @@ class CrawlerService {
    * @returns {Object} Object with internal and external link arrays
    */
   categorizeLinksByDomain(links, baseUrl) {
-    const internal = [];
-    const external = [];
+    const internal = new Set();
+    const external = new Set();
     
-    links.forEach(link => {
-      if (!link) return;
-      
-      // Skip anchor links, javascript, and mailto
-      if (link.startsWith('#') || 
-          link.startsWith('javascript:') || 
-          link.startsWith('mailto:') ||
-          link.startsWith('tel:')) {
-        return;
+    const skipPatterns = new Set(['#', 'javascript:', 'mailto:', 'tel:']);
+    
+    for (const link of links) {
+      if (!link || [...skipPatterns].some(pattern => link.startsWith(pattern))) {
+        continue;
       }
       
       try {
-        // If it's a relative URL or has the same hostname, it's internal
-        if (link.startsWith('/') || 
-            link.startsWith('./') || 
-            link.startsWith('../') ||
-            link.includes(baseUrl.hostname)) {
-          internal.push(link);
+        const isRelative = /^\.{0,2}\//.test(link);
+        if (isRelative || link.includes(baseUrl.hostname)) {
+          internal.add(link);
         } else {
-          // Try to parse it as a URL to validate
-          new URL(link);
-          external.push(link);
+          new URL(link); // Validate URL
+          external.add(link);
         }
       } catch (e) {
-        // If we can't parse it as a URL, assume it's a relative link
-        internal.push(link);
+        internal.add(link);
       }
-    });
+    }
     
-    return { internal, external };
+    return {
+      internal: [...internal],
+      external: [...external]
+    };
   }
 
   /**

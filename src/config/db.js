@@ -2,7 +2,7 @@ const { Pool } = require('pg');
 const logger = require('./logger');
 
 const poolConfig = {
-  connectionString: process.env.DATABASE_URL || 'postgresql://postgres:password@localhost:5432/linkanalyzer',
+  connectionString: process.env.DATABASE_URL || 'postgresql://mikeyautorino@localhost:5432/linkanalyzer',
 };
 
 // Add SSL configuration for production environments (like Vercel)

@@ -1,4 +1,5 @@
 import React from 'react';
+import StatsGrid from './StatsGrid';
 
 const AnalysisResults = ({ data, onReanalyze }) => {
   if (!data) return null;
@@ -22,28 +23,7 @@ const AnalysisResults = ({ data, onReanalyze }) => {
       </div>
       
       <div className="results-content">
-        {/* Stats Grid */}
-        <div className="stats-grid">
-          <div className="stat-card">
-            <div className="stat-value">{data.word_count}</div>
-            <div className="stat-label">Words</div>
-          </div>
-          
-          <div className="stat-card">
-            <div className="stat-value">{data.link_counts?.internal || 0}</div>
-            <div className="stat-label">Internal Links</div>
-          </div>
-          
-          <div className="stat-card">
-            <div className="stat-value">{data.link_counts?.external || 0}</div>
-            <div className="stat-label">External Links</div>
-          </div>
-          
-          <div className="stat-card">
-            <div className="stat-value">{data.images?.length || 0}</div>
-            <div className="stat-label">Images</div>
-          </div>
-        </div>
+        <StatsGrid data={data} />
         
         {/* Headings Section */}
         <div className="section">
