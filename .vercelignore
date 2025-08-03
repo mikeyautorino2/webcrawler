@@ -40,3 +40,6 @@ client/public/
 client/package.json
 client/package-lock.json
 client/README.md
+
+# Local development server file (not needed for Vercel)
+src/index.js
