@@ -68,17 +68,34 @@ app.use((req, res) => {
 if (process.env.NODE_ENV === 'production') {
   const clientBuildPath = path.join(__dirname, '..', 'client', 'build');
   
-  // Serve static files
-  app.use(express.static(clientBuildPath));
+  // Debug logging
+  logger.info('Production mode enabled', { clientBuildPath });
   
-  // Handle React routing, return all requests to React app
-  app.get('*', (req, res, next) => {
-    // Skip API routes
-    if (req.path.startsWith('/api/')) {
-      return next();
-    }
-    res.sendFile(path.join(clientBuildPath, 'index.html'));
-  });
+  // Check if build directory exists
+  if (fs.existsSync(clientBuildPath)) {
+    logger.info('Client build directory found');
+    
+    // Serve static files
+    app.use(express.static(clientBuildPath));
+    
+    // Handle React routing, return all requests to React app
+    app.get('*', (req, res, next) => {
+      // Skip API routes
+      if (req.path.startsWith('/api/')) {
+        return next();
+      }
+      
+      const indexPath = path.join(clientBuildPath, 'index.html');
+      if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+      } else {
+        logger.error('index.html not found', { indexPath });
+        res.status(404).send('Frontend build not found');
+      }
+    });
+  } else {
+    logger.error('Client build directory not found', { clientBuildPath });
+  }
 }
 
 // Global error handler
