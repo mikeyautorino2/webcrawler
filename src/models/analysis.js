@@ -72,7 +72,7 @@ const Analysis = {
         `INSERT INTO analyses (url, title, description, headings, link_counts, images, word_count)
          VALUES ($1, $2, $3, $4, $5, $6, $7)
          RETURNING *`,
-        [url, title, description, headings, link_counts, images, word_count]
+        [url, title, description, JSON.stringify(headings), JSON.stringify(link_counts), JSON.stringify(images), word_count]
       );
       
       logger.info('Created new analysis', { url });
@@ -118,7 +118,7 @@ const Analysis = {
              link_counts = $5, images = $6, word_count = $7, updated_at = NOW()
          WHERE id = $8
          RETURNING *`,
-        [url, title, description, headings, link_counts, images, word_count, id]
+        [url, title, description, JSON.stringify(headings), JSON.stringify(link_counts), JSON.stringify(images), word_count, id]
       );
       
       if (result.rows.length === 0) {
