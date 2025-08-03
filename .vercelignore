@@ -1,5 +1,5 @@
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 
@@ -9,6 +9,9 @@ jspm_packages/
 
 # Testing
 coverage/
+tests/
+**/*.test.js
+**/*.spec.js
 
 # Environment variables
 .env
@@ -26,3 +29,15 @@ coverage/
 # OS
 .DS_Store
 Thumbs.db
+
+# Development files
+src/index.js
+build.sh
+jest.config.js
+
+# Client source files (we only need the build)
+client/src/
+client/public/
+client/package.json
+client/package-lock.json
+client/README.md

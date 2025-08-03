@@ -56,47 +56,8 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({
-    error: 'Not Found',
-    message: `The requested resource at ${req.path} was not found`
-  });
-});
-
-// Serve static files from the React app in production
-if (process.env.NODE_ENV === 'production') {
-  const clientBuildPath = path.join(__dirname, '..', 'client', 'build');
-  
-  // Debug logging
-  logger.info('Production mode enabled', { clientBuildPath });
-  
-  // Check if build directory exists
-  if (fs.existsSync(clientBuildPath)) {
-    logger.info('Client build directory found');
-    
-    // Serve static files
-    app.use(express.static(clientBuildPath));
-    
-    // Handle React routing, return all requests to React app
-    app.get('*', (req, res, next) => {
-      // Skip API routes
-      if (req.path.startsWith('/api/')) {
-        return next();
-      }
-      
-      const indexPath = path.join(clientBuildPath, 'index.html');
-      if (fs.existsSync(indexPath)) {
-        res.sendFile(indexPath);
-      } else {
-        logger.error('index.html not found', { indexPath });
-        res.status(404).send('Frontend build not found');
-      }
-    });
-  } else {
-    logger.error('Client build directory not found', { clientBuildPath });
-  }
-}
+// Note: Static file serving is handled by Vercel's routing configuration
+// Only include 404 handler for API routes
 
 // Global error handler
 app.use(errorHandler);
