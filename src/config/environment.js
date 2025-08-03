@@ -6,5 +6,5 @@ module.exports = {
   dbUrl: process.env.DATABASE_URL || 'postgresql://mikeyautorino@localhost:5432/linkanalyzer',
   allowedOrigins: process.env.ALLOWED_ORIGINS 
     ? process.env.ALLOWED_ORIGINS.split(',') 
-    : ['http://localhost:3000']
+    : ['http://localhost:3000', 'https://localhost:3000']
 };

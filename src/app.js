@@ -33,6 +33,12 @@ app.use(cors({
     // Allow requests with no origin (like mobile apps, curl, etc)
     if (!origin) return callback(null, true);
     
+    // In production (Vercel), allow same-origin requests
+    if (process.env.NODE_ENV === 'production') {
+      return callback(null, true);
+    }
+    
+    // In development, check against allowed origins
     if (allowedOrigins.indexOf(origin) === -1) {
       const msg = 'The CORS policy for this site does not allow access from the specified origin.';
       return callback(new Error(msg), false);
