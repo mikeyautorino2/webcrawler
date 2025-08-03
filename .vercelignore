@@ -31,7 +31,6 @@ tests/
 Thumbs.db
 
 # Development files
-src/index.js
 build.sh
 jest.config.js
 
