@@ -7,7 +7,7 @@ import Header from './components/Header';
 import LoadingSpinner from './components/LoadingSpinner';
 import api from './utils/api';
 
-const API_ENDPOINT = '/api/analyze';
+const API_ENDPOINT = '/analyze';
 
 function App() {
   // eslint-disable-next-line no-unused-vars

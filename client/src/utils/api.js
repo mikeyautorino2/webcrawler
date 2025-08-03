@@ -4,7 +4,7 @@ import axios from 'axios';
 // Create base URL based on environment
 const baseURL = process.env.NODE_ENV === 'production' 
   ? '/api' // In production, API routes are under /api path on the same domain
-  : 'http://localhost:9999'; // In development, use the proxy
+  : 'http://localhost:9999/api'; // In development, connect directly to backend
 
 const api = axios.create({
   baseURL,
