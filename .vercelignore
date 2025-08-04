@@ -34,9 +34,6 @@ Thumbs.db
 jest.config.js
 
 # Client source files (we only need the build, but keep package files for install)
-client/src/
-client/public/
-client/README.md
 
 # Local development server file (not needed for Vercel)
 src/index.js
