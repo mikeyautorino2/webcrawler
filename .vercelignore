@@ -31,14 +31,11 @@ tests/
 Thumbs.db
 
 # Development files
-build.sh
 jest.config.js
 
-# Client source files (we only need the build)
+# Client source files (we only need the build, but keep package files for install)
 client/src/
 client/public/
-client/package.json
-client/package-lock.json
 client/README.md
 
 # Local development server file (not needed for Vercel)
