@@ -20,26 +20,65 @@ class CrawlerService {
 
       const response = await axios.get(normalizedUrl, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.5',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
         },
         timeout: 30000, // 30 second timeout
         maxContentLength: 1024 * 1024 * 10, // 10MB max response size
+        maxRedirects: 5, // Allow up to 5 redirects
         validateStatus: function (status) {
-          return status >= 200 && status < 300; // Consider only 2xx status codes as success
+          return status >= 200 && status < 400; // Accept 2xx and 3xx status codes
         },
+        // Handle HTTPS certificate issues in development
+        httpsAgent: process.env.NODE_ENV === 'development' ? 
+          new (require('https').Agent)({ rejectUnauthorized: false }) : undefined,
       });
 
       const html = response.data;
       return this.parseHtml(html, normalizedUrl);
     } catch (error) {
-      logger.error('Error crawling URL', { 
-        url, 
+      // Enhanced error logging and handling
+      const errorDetails = {
+        url,
         error: error.message,
+        code: error.code,
         status: error.response?.status,
+        statusText: error.response?.statusText,
         headers: error.response?.headers,
-      });
+        timeout: error.code === 'ECONNABORTED',
+        network: error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED',
+      };
+      
+      logger.error('Error crawling URL', errorDetails);
+      
+      // Create more specific error messages
+      if (error.code === 'ECONNABORTED') {
+        const timeoutError = new Error('Request timeout - website took too long to respond');
+        timeoutError.code = 'ETIMEDOUT';
+        throw timeoutError;
+      }
+      
+      if (error.code === 'ENOTFOUND') {
+        const notFoundError = new Error('Website not found - please check the URL');
+        notFoundError.code = 'ENOTFOUND';
+        throw notFoundError;
+      }
+      
+      if (error.code === 'ECONNREFUSED') {
+        const connRefusedError = new Error('Connection refused - website is not accessible');
+        connRefusedError.code = 'ECONNREFUSED';
+        throw connRefusedError;
+      }
+      
+      // Handle HTTP status errors
+      if (error.response && error.response.status) {
+        error.response.data = { error: `HTTP ${error.response.status}: ${error.response.statusText}` };
+      }
+      
       throw error;
     }
   }
@@ -51,8 +90,18 @@ class CrawlerService {
    * @returns {Object} The extracted data
    */
   parseHtml(html, url) {
-    const $ = cheerio.load(html);
-    const baseUrl = new URL(url);
+    try {
+      // Validate HTML content
+      if (!html || typeof html !== 'string') {
+        throw new Error('Invalid HTML content received');
+      }
+      
+      if (html.length === 0) {
+        throw new Error('Empty HTML content received');
+      }
+      
+      const $ = cheerio.load(html);
+      const baseUrl = new URL(url);
     
     // Extract title
     const title = $('title').text().trim();
@@ -99,19 +148,37 @@ class CrawlerService {
       }
     });
     
-    return {
-      url,
-      title,
-      description,
-      headings,
-      link_counts: {
-        internal: internal.length,
-        external: external.length,
-        total: allLinks.length,
-      },
-      images,
-      word_count: wordCount,
-    };
+      return {
+        url,
+        title: title || 'No title found',
+        description: description || '',
+        headings,
+        link_counts: {
+          internal: internal.length,
+          external: external.length,
+          total: allLinks.length,
+        },
+        images,
+        word_count: wordCount,
+      };
+    } catch (parseError) {
+      logger.error('Error parsing HTML', {
+        url,
+        error: parseError.message,
+        htmlLength: html?.length || 0,
+      });
+      
+      // Return minimal data structure on parse error
+      return {
+        url,
+        title: 'Error parsing page',
+        description: `Failed to parse HTML: ${parseError.message}`,
+        headings: { h1: [], h2: [], h3: [] },
+        link_counts: { internal: 0, external: 0, total: 0 },
+        images: [],
+        word_count: 0,
+      };
+    }
   }
 
   /**

@@ -53,7 +53,7 @@ const AnalysisController = {
         return res.status(400).json({ error: 'Website not found. Please check if the URL is correct.' });
       }
 
-      if (error.code === 'ETIMEDOUT') {
+      if (error.code === 'ETIMEDOUT' || error.code === 'ECONNABORTED') {
         return res.status(400).json({ error: 'Request timed out. The website took too long to respond.' });
       }
 
