@@ -8,7 +8,8 @@ const poolConfig = {
 // Add SSL configuration for production environments (like Vercel/Supabase)
 if (process.env.NODE_ENV === 'production' || process.env.DATABASE_URL?.includes('supabase')) {
   poolConfig.ssl = {
-    rejectUnauthorized: false // Required for Supabase and other PostgreSQL providers
+    rejectUnauthorized: false,
+    require: true
   };
 }
 

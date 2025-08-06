@@ -68,25 +68,54 @@ app.use(express.json());
 // API routes
 app.use('/api/analyze', analysisRoutes);
 
+// Debug endpoint for troubleshooting
+app.get('/api/debug', (req, res) => {
+  res.json({
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    request: {
+      method: req.method,
+      url: req.url,
+      headers: req.headers,
+      origin: req.get('Origin'),
+    },
+    server: {
+      nodeVersion: process.version,
+      platform: process.platform,
+      uptime: process.uptime(),
+    }
+  });
+});
+
 // Health check endpoint
 app.get('/health', async (req, res) => {
+  const healthCheck = {
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    database: 'disconnected',
+    version: '1.0.0'
+  };
+
   try {
-    // Test database connection
-    const dbCheck = await require('./config/db').query('SELECT 1');
-    res.status(200).json({ 
-      status: 'ok', 
-      timestamp: new Date().toISOString(),
-      database: 'connected',
-      environment: process.env.NODE_ENV || 'development'
-    });
+    // Test database connection with timeout
+    const dbCheck = await Promise.race([
+      require('./config/db').query('SELECT 1 as test, NOW() as timestamp'),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Database timeout')), 5000))
+    ]);
+    
+    healthCheck.database = 'connected';
+    healthCheck.dbResponse = dbCheck.rows[0];
+    
+    logger.info('Health check passed', healthCheck);
+    res.status(200).json(healthCheck);
   } catch (error) {
-    logger.error('Health check failed', { error: error.message });
-    res.status(503).json({ 
-      status: 'error', 
-      timestamp: new Date().toISOString(),
-      database: 'disconnected',
-      error: error.message
-    });
+    healthCheck.status = 'error';
+    healthCheck.database = 'disconnected';
+    healthCheck.error = error.message;
+    
+    logger.error('Health check failed', { error: error.message, stack: error.stack });
+    res.status(503).json(healthCheck);
   }
 });
 

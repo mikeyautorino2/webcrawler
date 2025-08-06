@@ -1,10 +1,22 @@
 // API utility to handle both development and production environments
 import axios from 'axios';
 
-// Create base URL based on environment
-const baseURL = process.env.NODE_ENV === 'production' 
+// Create base URL based on environment with multiple detection methods
+const isProduction = process.env.NODE_ENV === 'production' || 
+                    window.location.hostname !== 'localhost' ||
+                    window.location.hostname.includes('vercel.app');
+
+const baseURL = isProduction
   ? '/api' // In production, API routes are under /api path on the same domain
   : 'http://localhost:9999/api'; // In development, connect directly to backend
+
+// Debug logging to help identify environment issues
+console.log('API Configuration:', {
+  NODE_ENV: process.env.NODE_ENV,
+  hostname: window.location.hostname,
+  isProduction,
+  baseURL
+});
 
 const api = axios.create({
   baseURL,
@@ -45,7 +57,13 @@ api.interceptors.response.use(
       
       // Log specific error for different status codes
       if (error.response.status === 404) {
-        console.error('API endpoint not found. This might indicate a Vercel deployment issue.');
+        console.error('API endpoint not found. This might indicate a deployment issue.', {
+          requestedURL: error.config?.url,
+          baseURL: error.config?.baseURL,
+          fullURL: error.config?.baseURL + error.config?.url,
+          hostname: window.location.hostname,
+          isProduction
+        });
         errorResponse.message = 'API endpoint not found. Please try again or contact support.';
       } else if (error.response.status === 0) {
         errorResponse.message = 'Network error. Please check your connection.';
@@ -57,7 +75,10 @@ api.interceptors.response.use(
         status: error.response.status,
         data: error.response.data,
         headers: error.response.headers,
-        url: error.config?.url
+        url: error.config?.url,
+        baseURL: error.config?.baseURL,
+        fullURL: error.config?.baseURL + error.config?.url,
+        environment: { NODE_ENV: process.env.NODE_ENV, hostname: window.location.hostname, isProduction }
       });
     } else if (error.request) {
       // The request was made but no response was received
@@ -65,7 +86,11 @@ api.interceptors.response.use(
       errorResponse.status = 0;
       console.error('API Network Error:', {
         request: error.request,
-        config: error.config
+        config: error.config,
+        requestURL: error.config?.url,
+        baseURL: error.config?.baseURL,
+        fullURL: error.config?.baseURL + error.config?.url,
+        environment: { NODE_ENV: process.env.NODE_ENV, hostname: window.location.hostname, isProduction }
       });
     } else {
       // Something happened in setting up the request that triggered an error

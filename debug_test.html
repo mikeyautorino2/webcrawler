@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Debug Test</title>
+</head>
+<body>
+    <h1>Web Crawler API Debug Test</h1>
+    <button onclick="testLocalAPI()">Test Local API</button>
+    <button onclick="testProductionAPI()">Test Production API</button>
+    <div id="results"></div>
+
+    <script>
+        async function testLocalAPI() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<h3>Testing Local API...</h3>';
+            
+            try {
+                // Test health endpoint
+                console.log('Testing health endpoint...');
+                const healthResponse = await fetch('http://localhost:9999/health');
+                const healthData = await healthResponse.json();
+                results.innerHTML += '<p><strong>Health Check:</strong> ' + JSON.stringify(healthData) + '</p>';
+                
+                // Test analysis endpoint
+                console.log('Testing analysis endpoint...');
+                const analyzeResponse = await fetch('http://localhost:9999/api/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: 'https://example.com' })
+                });
+                
+                if (!analyzeResponse.ok) {
+                    throw new Error(`HTTP error! status: ${analyzeResponse.status}`);
+                }
+                
+                const analyzeData = await analyzeResponse.json();
+                results.innerHTML += '<p><strong>Analysis Result:</strong> ' + JSON.stringify(analyzeData, null, 2) + '</p>';
+                
+            } catch (error) {
+                console.error('Local API test failed:', error);
+                results.innerHTML += '<p style="color: red;"><strong>Error:</strong> ' + error.message + '</p>';
+            }
+        }
+        
+        async function testProductionAPI() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<h3>Testing Production API...</h3>';
+            
+            // Try common Vercel URLs
+            const possibleUrls = [
+                'https://webcrawler-proj.vercel.app',
+                'https://webcrawler.vercel.app',
+                'https://webcrawler-mikeyautorino2.vercel.app'
+            ];
+            
+            for (const baseUrl of possibleUrls) {
+                try {
+                    console.log(`Testing ${baseUrl}...`);
+                    const healthResponse = await fetch(`${baseUrl}/health`);
+                    
+                    if (healthResponse.ok) {
+                        const healthData = await healthResponse.json();
+                        results.innerHTML += `<p><strong>Found working production URL:</strong> ${baseUrl}</p>`;
+                        results.innerHTML += '<p><strong>Health Check:</strong> ' + JSON.stringify(healthData) + '</p>';
+                        
+                        // Test analysis endpoint
+                        const analyzeResponse = await fetch(`${baseUrl}/api/analyze`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ url: 'https://example.com' })
+                        });
+                        
+                        if (analyzeResponse.ok) {
+                            const analyzeData = await analyzeResponse.json();
+                            results.innerHTML += '<p><strong>Analysis Result:</strong> ' + JSON.stringify(analyzeData, null, 2) + '</p>';
+                        } else {
+                            results.innerHTML += `<p style="color: orange;"><strong>Analysis failed:</strong> ${analyzeResponse.status} - ${analyzeResponse.statusText}</p>`;
+                        }
+                        
+                        return; // Found working URL, exit loop
+                    }
+                } catch (error) {
+                    console.log(`${baseUrl} failed:`, error.message);
+                }
+            }
+            
+            results.innerHTML += '<p style="color: red;"><strong>No working production URLs found</strong></p>';
+        }
+    </script>
+</body>
+</html>

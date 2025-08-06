@@ -47,7 +47,22 @@ function App() {
       setLoading(false);
     } catch (err) {
       console.error('Error analyzing URL:', err);
-      setError(err.response?.data?.error || 'Failed to analyze URL');
+      
+      // Enhanced error message with debugging info
+      let errorMessage = 'Failed to analyze URL';
+      
+      if (err.response?.data?.error) {
+        errorMessage = err.response.data.error;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      // Add debug info for 404 errors
+      if (err.status === 404 || err.response?.status === 404) {
+        errorMessage += ' (API endpoint not found - please check deployment)';
+      }
+      
+      setError(errorMessage);
       setLoading(false);
     }
   };
