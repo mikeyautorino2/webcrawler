@@ -202,6 +202,28 @@
   padding: 20px;
 }
 
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.history-header h2 {
+  margin: 0;
+}
+
+.btn-secondary {
+  background-color: var(--gray);
+  color: var(--text);
+  border: 1px solid var(--gray);
+}
+
+.btn-secondary:hover {
+  background-color: var(--gray-light);
+  border-color: var(--gray-light);
+}
+
 .history-list {
   list-style: none;
 }

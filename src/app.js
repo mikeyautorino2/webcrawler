@@ -9,7 +9,6 @@ const logger = require('./config/logger');
 const errorHandler = require('./middleware/errorHandler');
 const { allowedOrigins } = require('./config/environment');
 const analysisRoutes = require('./routes/analysis');
-const AnalysisModel = require('./models/analysis');
 
 // Create Express app
 const app = express();
@@ -88,35 +87,17 @@ app.get('/api/debug', (req, res) => {
 });
 
 // Health check endpoint
-app.get('/health', async (req, res) => {
+app.get('/health', (req, res) => {
   const healthCheck = {
     status: 'ok',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
-    database: 'disconnected',
-    version: '1.0.0'
+    version: '1.0.0',
+    storage: 'localStorage (client-side)'
   };
 
-  try {
-    // Test database connection with timeout
-    const dbCheck = await Promise.race([
-      require('./config/db').query('SELECT 1 as test, NOW() as timestamp'),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Database timeout')), 5000))
-    ]);
-    
-    healthCheck.database = 'connected';
-    healthCheck.dbResponse = dbCheck.rows[0];
-    
-    logger.info('Health check passed', healthCheck);
-    res.status(200).json(healthCheck);
-  } catch (error) {
-    healthCheck.status = 'error';
-    healthCheck.database = 'disconnected';
-    healthCheck.error = error.message;
-    
-    logger.error('Health check failed', { error: error.message, stack: error.stack });
-    res.status(503).json(healthCheck);
-  }
+  logger.info('Health check passed', healthCheck);
+  res.status(200).json(healthCheck);
 });
 
 // Note: Static file serving is handled by Vercel's routing configuration
@@ -125,14 +106,4 @@ app.get('/health', async (req, res) => {
 // Global error handler
 app.use(errorHandler);
 
-// Initialize database table
-async function initializeDatabase() {
-  try {
-    await AnalysisModel.initTable();
-  } catch (err) {
-    logger.error('Failed to initialize database', { error: err.message });
-    process.exit(1);
-  }
-}
-
-module.exports = { app, initializeDatabase };
+module.exports = { app };

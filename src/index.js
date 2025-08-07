@@ -1,4 +1,4 @@
-const { app, initializeDatabase } = require('./app');
+const { app } = require('./app');
 const logger = require('./config/logger');
 const { port, nodeEnv } = require('./config/environment');
 
@@ -14,12 +14,9 @@ process.on('unhandledRejection', (reason, promise) => {
   process.exit(1);
 });
 
-// Initialize database and start server
+// Start server
 async function startServer() {
   try {
-    // Initialize database
-    await initializeDatabase();
-    
     // Try multiple ports starting from the configured port
     const startPort = parseInt(port, 10);
     const maxPortAttempts = 10;

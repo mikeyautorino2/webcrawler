@@ -6,6 +6,7 @@ import HistoryList from './components/HistoryList';
 import Header from './components/Header';
 import LoadingSpinner from './components/LoadingSpinner';
 import api from './utils/api';
+import { localStorageHistory } from './utils/localStorage';
 
 const API_ENDPOINT = '/analyze';
 
@@ -21,15 +22,12 @@ function App() {
     fetchHistory();
   }, []);
 
-  const fetchHistory = async () => {
+  const fetchHistory = () => {
     try {
-      setLoading(true);
-      const response = await api.get(API_ENDPOINT);
-      setHistory(response.data);
-      setLoading(false);
+      const localHistory = localStorageHistory.getHistory();
+      setHistory(localHistory);
     } catch (err) {
-      console.error('Error fetching history:', err);
-      setLoading(false);
+      console.error('Error fetching history from localStorage:', err);
     }
   };
 
@@ -40,9 +38,19 @@ function App() {
       setUrl(submittedUrl);
       
       const response = await api.post(API_ENDPOINT, { url: submittedUrl });
-      setAnalysisData(response.data);
+      const analysisResult = response.data;
       
-      // Refresh history after new analysis
+      // Save to localStorage history and get the history item with local ID
+      const historyItem = localStorageHistory.addAnalysis(analysisResult);
+      
+      // Set analysis data for display with local ID attached
+      const analysisWithLocalId = {
+        ...analysisResult,
+        localId: historyItem.id
+      };
+      setAnalysisData(analysisWithLocalId);
+      
+      // Refresh history display
       fetchHistory();
       setLoading(false);
     } catch (err) {
@@ -67,31 +75,83 @@ function App() {
     }
   };
 
-  const handleViewAnalysis = async (id) => {
+  const handleViewAnalysis = (id) => {
     try {
       setLoading(true);
-      const response = await api.get(`${API_ENDPOINT}/${id}`);
-      setAnalysisData(response.data);
-      setUrl(response.data.url);
+      const analysisData = localStorageHistory.getAnalysisById(id);
+      
+      if (analysisData) {
+        // Add local ID to the analysis data for reanalyze functionality
+        const analysisWithLocalId = {
+          ...analysisData,
+          localId: id
+        };
+        setAnalysisData(analysisWithLocalId);
+        setUrl(analysisData.url);
+      } else {
+        setError('Analysis not found in local history');
+      }
+      
       setLoading(false);
     } catch (err) {
-      console.error('Error fetching analysis:', err);
+      console.error('Error fetching analysis from localStorage:', err);
       setError('Failed to fetch analysis');
       setLoading(false);
     }
   };
 
-  const handleReanalyze = async (id) => {
+  const handleReanalyze = async (localId) => {
     try {
       setLoading(true);
-      const response = await api.post(`${API_ENDPOINT}/${id}/reanalyze`);
-      setAnalysisData(response.data);
+      setError('');
+      
+      // Get the existing analysis from localStorage to get the URL
+      const existingAnalysis = localStorageHistory.getAnalysisById(localId);
+      
+      if (!existingAnalysis) {
+        setError('Analysis not found in local history');
+        setLoading(false);
+        return;
+      }
+      
+      // Re-analyze the URL using the same endpoint as initial analysis
+      const response = await api.post(API_ENDPOINT, { url: existingAnalysis.url });
+      const updatedAnalysisResult = response.data;
+      
+      // Update the analysis data for display with local ID
+      const updatedAnalysisWithLocalId = {
+        ...updatedAnalysisResult,
+        localId: localId
+      };
+      setAnalysisData(updatedAnalysisWithLocalId);
+      
+      // Update the localStorage entry with new analysis data
+      localStorageHistory.updateAnalysis(localId, updatedAnalysisResult);
+      
+      // Refresh history display
       fetchHistory();
       setLoading(false);
     } catch (err) {
       console.error('Error reanalyzing URL:', err);
-      setError('Failed to reanalyze URL');
+      
+      let errorMessage = 'Failed to reanalyze URL';
+      
+      if (err.response?.data?.error) {
+        errorMessage = err.response.data.error;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
       setLoading(false);
+    }
+  };
+
+  const handleClearHistory = () => {
+    if (window.confirm('Are you sure you want to clear all analysis history? This action cannot be undone.')) {
+      localStorageHistory.clearHistory();
+      fetchHistory();
+      setAnalysisData(null); // Clear current analysis if it was from history
     }
   };
 
@@ -108,13 +168,14 @@ function App() {
         {analysisData && (
           <AnalysisResults 
             data={analysisData} 
-            onReanalyze={() => handleReanalyze(analysisData.id)}
+            onReanalyze={() => handleReanalyze(analysisData.localId)}
           />
         )}
         
         <HistoryList 
           history={history} 
           onViewAnalysis={handleViewAnalysis}
+          onClearHistory={handleClearHistory}
         />
       </main>
       
