@@ -1,6 +1,6 @@
 # Link Analyzer & Web Crawler
 
-A modern web application that analyzes websites by extracting metadata, counting links and images, and providing insights about web pages.
+A modern web application that analyzes websites by extracting metadata, counting links and images, and providing insights about web pages. Features browser-only history storage for privacy and no database requirements.
 
 ## 🚀 Features
 
@@ -8,15 +8,16 @@ A modern web application that analyzes websites by extracting metadata, counting
 - **Metadata Extraction**: Fetch title, description, headings, links, and images
 - **Link Analysis**: Count and categorize internal vs. external links
 - **Image Analysis**: Collect image information from web pages
-- **Analysis History**: View and revisit previous analyses
+- **Browser-Only History**: View and revisit previous analyses stored locally
+- **Privacy-First**: No shared data, all history local to your browser
 - **Clean, Modern UI**: Responsive design with intuitive interface
-- **API Endpoints**: Full REST API for integration with other applications
+- **Serverless Ready**: Deployable to Vercel with no database setup
 
 ## 🛠️ Technologies Used
 
 ### Backend
 - **Node.js** with **Express.js** framework
-- **PostgreSQL** database for data persistence
+- **LocalStorage** for browser-only history management
 - **Cheerio** for HTML parsing and web scraping
 - **Axios** for HTTP requests
 - **Jest** for backend testing
@@ -30,68 +31,73 @@ A modern web application that analyzes websites by extracting metadata, counting
 
 ### Prerequisites
 - Node.js (v18 or higher)
-- PostgreSQL (v14 or higher)
+- No database required
 
-### Backend Setup
+### Quick Start
 1. Clone the repository
    ```bash
    git clone https://github.com/yourusername/link-analyzer.git
    cd link-analyzer
    ```
 
-2. Install dependencies
+2. Install all dependencies
    ```bash
    npm install
+   npm run install-client
    ```
 
-3. Create PostgreSQL database
+3. Run the full stack application
    ```bash
-   createdb linkanalyzer
+   npm run dev-full
    ```
+   - Backend runs on http://localhost:9999
+   - Frontend runs on http://localhost:3000
 
-4. Configure environment variables
-   ```bash
-   cp .env.example .env
-   # Edit .env with your database credentials
-   ```
-
-5. Run the backend server
-   ```bash
-   npm run dev
-   ```
-   The server will run on port 9999 by default (http://localhost:9999)
-
-### Frontend Setup
-1. Navigate to the client directory
-   ```bash
-   cd client
-   ```
-
-2. Install dependencies
-   ```bash
-   npm install
-   ```
-
-3. Start the React development server
-   ```bash
-   npm start
-   ```
-   The frontend will run on port 3000 by default (http://localhost:3000)
+### Development Commands
+- `npm run dev` - Backend only with nodemon
+- `npm run client` - Frontend only
+- `npm run dev-full` - Both backend and frontend concurrently
+- `npm run build` - Full production build
+- `npm test` - Run backend tests
 
 ## 📊 API Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/analyze` | Analyze a new URL |
-| GET | `/api/analyze` | Get analysis history |
-| GET | `/api/analyze/:id` | Get analysis by ID |
-| POST | `/api/analyze/:id/reanalyze` | Re-analyze a URL |
+| POST | `/api/analyze` | Analyze a URL and return metadata |
+| GET | `/health` | Health check endpoint |
 
 ### Example API Request
 ```bash
 curl -X POST http://localhost:9999/api/analyze \
   -H "Content-Type: application/json" \
   -d '{"url": "https://example.com"}'
+```
+
+### Example Response
+```json
+{
+  "success": true,
+  "data": {
+    "url": "https://example.com",
+    "title": "Example Domain",
+    "description": "This domain is for use in examples",
+    "headings": {
+      "h1": ["Example Domain"],
+      "h2": [],
+      "h3": []
+    },
+    "links": {
+      "total": 1,
+      "internal": 0,
+      "external": 1
+    },
+    "images": {
+      "total": 0
+    },
+    "wordCount": 101
+  }
+}
 ```
 
 ## 🧪 Testing
@@ -101,10 +107,7 @@ Run backend tests:
 npm test
 ```
 
-Run frontend tests:
-```bash
-cd client && npm test
-```
+Tests are configured for the backend only and located in the `/tests/` directory.
 
 ## 📱 How to Use
 
@@ -112,35 +115,59 @@ cd client && npm test
 2. Enter a URL in the input field
 3. Click "Analyze" button
 4. View the analysis results displaying metadata, link counts, and other statistics
-5. Access your analysis history to revisit previous analyses
+5. Access your browser-only analysis history to revisit previous analyses
+6. Clear history anytime with the confirmation dialog
 
 ## 🔄 Project Structure
 
 ```
-link-analyzer/
+webcrawler-proj/
+├── api/                    # Vercel serverless functions
+│   └── index.js            # Main API endpoint
 ├── client/                 # Frontend React application
 │   ├── public/             # Static files
 │   └── src/                # React source code
 │       ├── components/     # React components
-│       └── ...
+│       └── utils/          # API client & localStorage utils
 ├── src/                    # Backend Express application
+│   ├── app.js              # Express app configuration
+│   ├── index.js            # Server entry point
 │   ├── config/             # Configuration files
 │   ├── controllers/        # Route controllers
-│   ├── middleware/         # Express middlewares
-│   ├── models/             # Database models
 │   ├── routes/             # API routes
-│   └── services/           # Business logic
-├── logs/                   # Application logs
-└── tests/                  # Test files
+│   ├── services/           # Web crawler service
+│   └── utils/              # URL validation utilities
+├── tests/                  # Backend test files
+├── vercel.json             # Vercel deployment config
+└── build.sh               # Production build script
 ```
+
+## 🚀 Deployment
+
+### Vercel Deployment
+This project is configured for easy Vercel deployment:
+
+```bash
+npm run vercel-build
+```
+
+The build process:
+- Builds React frontend to `/client/build/`
+- Configures serverless function at `/api/index.js`
+- No database setup required
+
+### Environment Variables (Optional)
+- `NODE_ENV` - Set to 'production' for production
+- `PORT` - Server port (defaults to 9999)
+- `ALLOWED_ORIGINS` - CORS allowed origins
 
 ## 🔮 Future Enhancements
 
-- User authentication and personal analysis history
 - PDF report generation
 - Batch URL processing
 - SEO recommendations based on analysis
 - Advanced crawling options
+- Export analysis results
 
 ## 📄 License
 
