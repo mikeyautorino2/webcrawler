@@ -1,4 +1,4 @@
-# Link Analyzer & Web Crawler
+# Link Analyzer
 
 A modern web application that analyzes websites by extracting metadata, counting links and images, and providing insights about web pages. Features browser-only history storage for privacy and no database requirements.
 
