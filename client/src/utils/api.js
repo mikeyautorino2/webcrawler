@@ -102,4 +102,37 @@ api.interceptors.response.use(
   }
 );
 
+// API Functions
+export const analyzeUrl = async (url) => {
+  const response = await api.post('/analyze', { url });
+  return response.data;
+};
+
+export const bulkAnalyzeUrls = async (urls, maxConcurrent = 5) => {
+  const response = await api.post('/analyze/bulk', { urls, maxConcurrent });
+  return response.data;
+};
+
+export const exportResults = async (data) => {
+  const response = await api.post('/analyze/export', { data }, {
+    responseType: 'blob'
+  });
+  
+  // Create download link
+  const blob = new Blob([response.data], { 
+    type: 'application/json' 
+  });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  link.download = `web-analysis-${timestamp}.json`;
+  
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+};
+
 export default api;

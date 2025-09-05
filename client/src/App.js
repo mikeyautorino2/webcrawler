@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import './App.css';
 import UrlForm from './components/UrlForm';
 import AnalysisResults from './components/AnalysisResults';
+import BulkResults from './components/BulkResults';
 import HistoryList from './components/HistoryList';
 import Header from './components/Header';
 import LoadingSpinner from './components/LoadingSpinner';
-import api from './utils/api';
+import { analyzeUrl, bulkAnalyzeUrls } from './utils/api';
 import { localStorageHistory } from './utils/localStorage';
 
 const API_ENDPOINT = '/analyze';
@@ -14,6 +15,7 @@ function App() {
   // eslint-disable-next-line no-unused-vars
   const [url, setUrl] = useState('');
   const [analysisData, setAnalysisData] = useState(null);
+  const [bulkResults, setBulkResults] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -36,9 +38,9 @@ function App() {
       setLoading(true);
       setError('');
       setUrl(submittedUrl);
+      setBulkResults(null); // Clear bulk results when doing single analysis
       
-      const response = await api.post(API_ENDPOINT, { url: submittedUrl });
-      const analysisResult = response.data;
+      const analysisResult = await analyzeUrl(submittedUrl);
       
       // Save to localStorage history and get the history item with local ID
       const historyItem = localStorageHistory.addAnalysis(analysisResult);
@@ -59,15 +61,39 @@ function App() {
       // Enhanced error message with debugging info
       let errorMessage = 'Failed to analyze URL';
       
-      if (err.response?.data?.error) {
-        errorMessage = err.response.data.error;
-      } else if (err.message) {
+      if (err.message) {
         errorMessage = err.message;
       }
       
-      // Add debug info for 404 errors
-      if (err.status === 404 || err.response?.status === 404) {
-        errorMessage += ' (API endpoint not found - please check deployment)';
+      setError(errorMessage);
+      setLoading(false);
+    }
+  };
+
+  const handleBulkSubmit = async (urls) => {
+    try {
+      setLoading(true);
+      setError('');
+      setAnalysisData(null); // Clear single analysis when doing bulk
+      
+      const bulkResult = await bulkAnalyzeUrls(urls, 5);
+      
+      // Save successful results to localStorage history
+      bulkResult.results.forEach(result => {
+        localStorageHistory.addAnalysis(result.data);
+      });
+      
+      setBulkResults(bulkResult);
+      
+      // Refresh history display
+      fetchHistory();
+      setLoading(false);
+    } catch (err) {
+      console.error('Error in bulk analysis:', err);
+      
+      let errorMessage = 'Failed to analyze URLs';
+      if (err.message) {
+        errorMessage = err.message;
       }
       
       setError(errorMessage);
@@ -114,9 +140,8 @@ function App() {
         return;
       }
       
-      // Re-analyze the URL using the same endpoint as initial analysis
-      const response = await api.post(API_ENDPOINT, { url: existingAnalysis.url });
-      const updatedAnalysisResult = response.data;
+      // Re-analyze the URL using the analyzeUrl function
+      const updatedAnalysisResult = await analyzeUrl(existingAnalysis.url);
       
       // Update the analysis data for display with local ID
       const updatedAnalysisWithLocalId = {
@@ -136,15 +161,18 @@ function App() {
       
       let errorMessage = 'Failed to reanalyze URL';
       
-      if (err.response?.data?.error) {
-        errorMessage = err.response.data.error;
-      } else if (err.message) {
+      if (err.message) {
         errorMessage = err.message;
       }
       
       setError(errorMessage);
       setLoading(false);
     }
+  };
+
+  const handleSelectBulkResult = (analysisData) => {
+    setBulkResults(null);
+    setAnalysisData(analysisData);
   };
 
   const handleClearHistory = () => {
@@ -161,9 +189,20 @@ function App() {
       
       <main className="container">
         <UrlForm 
-          onSubmit={handleSubmit} 
+          onSubmit={handleSubmit}
+          onBulkSubmit={handleBulkSubmit}
           error={error}
+          isLoading={loading}
         />
+        
+        {bulkResults && (
+          <BulkResults 
+            results={bulkResults.results}
+            errors={bulkResults.errors}
+            summary={bulkResults.summary}
+            onSelectResult={handleSelectBulkResult}
+          />
+        )}
         
         {analysisData && (
           <AnalysisResults 
