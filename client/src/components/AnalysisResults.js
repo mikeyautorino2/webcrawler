@@ -1,5 +1,6 @@
 import React from 'react';
 import StatsGrid from './StatsGrid';
+import { downloadAsJson } from '../utils/export';
 
 const AnalysisResults = ({ data, onReanalyze }) => {
   if (!data) return null;
@@ -10,6 +11,14 @@ const AnalysisResults = ({ data, onReanalyze }) => {
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
   };
 
+  // Handle JSON export
+  const handleExportJson = () => {
+    const success = downloadAsJson(data);
+    if (!success) {
+      alert('Failed to export JSON. Please try again.');
+    }
+  };
+
   return (
     <div className="results-container">
       <div className="results-header">
@@ -17,9 +26,14 @@ const AnalysisResults = ({ data, onReanalyze }) => {
         <p className="results-description">{data.description || 'No description available'}</p>
         <p className="history-url">{data.url}</p>
         <p className="history-date">Analyzed: {formatDate(data.created_at)}</p>
-        <button className="btn" onClick={onReanalyze} style={{ marginTop: '10px' }}>
-          Re-analyze
-        </button>
+        <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
+          <button className="btn" onClick={onReanalyze}>
+            Re-analyze
+          </button>
+          <button className="btn btn-secondary" onClick={handleExportJson}>
+            Export JSON
+          </button>
+        </div>
       </div>
       
       <div className="results-content">
